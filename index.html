@@ -26,7 +26,29 @@
     <!-- TODO (Шұғыла): басқару панелі. Толық тізім: docs/SPEC.md, 6-бөлім -->
     <aside class="controls">
       <h2>Басқару</h2>
-      <section class="panel">
+      
+<section class="panel">
+  <h3>Отбасыларды эвакуациялау</h3>
+
+  <div id="assign-panel">
+    <label class="option">
+      <input type="checkbox" id="use-mrv" checked>
+      MRV
+    </label>
+
+    <label class="option">
+      <input type="checkbox" id="use-forward" checked>
+      Forward checking
+    </label>
+
+    <button id="assign-button" type="button">
+      Барлығын бөлу
+    </button>
+
+    <div id="assign-result"></div>
+  </div>
+</section>
+<section class="panel">
         <h3>Маршрут</h3>
         <div id="route-panel"></div>
       </section>
