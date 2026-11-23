@@ -9,7 +9,8 @@
 <body>
   <!-- Міндетті ескерту: алып тастамаңыз -->
   <div class="warning">
-    Бұл оқу прототипі. Төтенше жағдайда <b>112</b> нөміріне хабарласыңыз және ТЖМ нұсқауларын орындаңыз.
+    Бұл оқу прототипі. Төтенше жағдайда <b>112</b> нөміріне
+    хабарласыңыз және ТЖМ нұсқауларын орындаңыз.
   </div>
 
   <header>
@@ -18,12 +19,23 @@
   </header>
 
   <main class="layout">
-    <!-- TODO (Шұғыла): картаны осы Canvas-қа салу -->
     <section class="map-panel">
-      <canvas id="map" width="720" height="480" aria-label="Ауыл картасы"></canvas>
+      <canvas
+        id="map"
+        width="720"
+        height="480"
+        aria-label="Ауыл картасы"
+      ></canvas>
+      <p>
+        Үйді басыңыз — маршрут көрсетіледі.
+        Жолды немесе көпірді басыңыз — хабар беруге болады.
+      </p>
+      <p>
+        Жол мен көпір: көк түс қоюлаған сайын су басу қаупі жоғары.
+        P &gt; 70% болса, ұяшық жабық.
+      </p>
     </section>
 
-    <!-- TODO (Шұғыла): басқару панелі. Толық тізім: docs/SPEC.md, 6-бөлім -->
     <aside class="controls">
       <h2>Басқару</h2>
       
@@ -48,15 +60,77 @@
     <div id="assign-result"></div>
   </div>
 </section>
-<section class="panel">
+
+      <section class="panel" aria-labelledby="bayes-heading">
+        <h3 id="bayes-heading">Су туралы хабарлама</h3>
+
+        <p id="selected-cell" aria-live="polite">
+          Картадан жолды немесе көпірді таңдаңыз.
+        </p>
+
+        <label for="reliability">
+          Хабар сенімділігі r (0–1):
+        </label>
+        <input
+          id="reliability"
+          type="number"
+          min="0"
+          max="1"
+          step="0.05"
+          value="0.8"
+          aria-describedby="reliability-help"
+        >
+
+        <p id="reliability-help">
+          Мысалы, 0.8 — 80% сенімділік.
+          Өзгерткенде барлық жиналған хабар осы мәнмен қайта есептеледі.
+        </p>
+
+        <div>
+          <button id="report-flooded" type="button" disabled>
+            Су басты
+          </button>
+          <button id="report-dry" type="button" disabled>
+            Құрғақ
+          </button>
+        </div>
+
+        <p id="report-count" aria-live="polite">
+          Хабар саны: 0
+        </p>
+
+        <button id="reset-reports" type="button" disabled>
+          Хабарларды тазарту
+        </button>
+      </section>
+
+      <section class="panel">
+        <details>
+          <summary>Қалай ойлады? — Байес</summary>
+          <p>
+            Бастапқы ықтималдық картадан алынады.
+            Әр жаңа хабардан кейін Байес ережесімен жаңартылады.
+          </p>
+          <p>
+            «Су басты»: P′ = rP / (rP + (1 − r)(1 − P)).
+            «Құрғақ» үшін r және 1 − r орын ауыстырады.
+          </p>
+          <div id="bayes-explain">
+            Әзірге хабарлама жоқ.
+          </div>
+        </details>
+      </section>
+
+      <section class="panel">
         <h3>Маршрут</h3>
         <div id="route-panel"></div>
       </section>
+
       <section class="panel">
         <div id="explain-panel"></div>
       </section>
-      <p class="todo">Тағы болады: жолдарға «Су басты» / «Құрғақ» хабарламаларын белгілеу</p>
-      <div id="error" class="error" hidden></div>
+
+      <div id="error" class="error" role="alert" hidden></div>
     </aside>
   </main>
 

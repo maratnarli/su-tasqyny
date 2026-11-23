@@ -90,5 +90,112 @@ for (const sc of scenarios) {
 }
 
 // ───────────────────────── 4. Байес ─────────────────────────
-// TODO (Динара): қате хабар үлесі 10%, 30%, 50% болғанда Байес болжамының дәлдігі
-console.log('\n4. Байес: Жарқын Динара толтырады (docs/TASKS.md)\n');
+const Bayes = require('./src/algorithms/bayes.js');
+
+// Бірдей seed → тәжірибені қайта іске қосқанда бірдей нәтиже.
+function seededRandom(seed) {
+  let state = seed >>> 0;
+  return function () {
+    state = (Math.imul(1664525, state) + 1013904223) >>> 0;
+    return state / 4294967296;
+  };
+}
+
+const bayesCells = [];
+for (let y = 0; y < village.grid.length; y++) {
+  for (let x = 0; x < village.grid[y].length; x++) {
+    if (['.', '=', 'H', 'S'].includes(village.grid[y][x])) {
+      bayesCells.push({
+        x,
+        y,
+        prior: Bayes.priorFor(village, x, y),
+      });
+    }
+  }
+}
+
+const trials = 200;
+const reportsPerCell = 5;
+const decisionThreshold = 0.5;
+const bayesRows = [];
+
+for (const errorRate of [0.1, 0.3, 0.5]) {
+  const random = seededRandom(2026);
+  const reliability = 1 - errorRate;
+
+  let total = 0;
+  let correctBefore = 0;
+  let correctAfter = 0;
+  let wrongReports = 0;
+  let totalReports = 0;
+  let floodedCount = 0;
+
+  for (let trial = 0; trial < trials; trial++) {
+    const truth = new Map();
+    const reports = [];
+
+    for (const cell of bayesCells) {
+      const key = `${cell.x},${cell.y}`;
+
+      // Синтетикалық шын күй картадағы prior бойынша жасалады.
+      const isFlooded = random() < cell.prior;
+      truth.set(key, isFlooded);
+      if (isFlooded) floodedCount++;
+
+      if ((cell.prior >= decisionThreshold) === isFlooded) {
+        correctBefore++;
+      }
+
+      for (let i = 0; i < reportsPerCell; i++) {
+        const isWrong = random() < errorRate;
+        const saysFlooded = isWrong ? !isFlooded : isFlooded;
+
+        reports.push({
+          x: cell.x,
+          y: cell.y,
+          says: saysFlooded ? 'flooded' : 'dry',
+        });
+
+        if (isWrong) wrongReports++;
+        totalReports++;
+      }
+
+      total++;
+    }
+
+    const { probs } = Bayes.applyReports(
+      village,
+      reports,
+      reliability
+    );
+
+    for (const [key, isFlooded] of truth) {
+      if ((probs.get(key) >= decisionThreshold) === isFlooded) {
+        correctAfter++;
+      }
+    }
+  }
+
+  bayesRows.push({
+    'қате хабар (мақсат)': `${errorRate * 100}%`,
+    'қате хабар (нақты)': `${(100 * wrongReports / totalReports).toFixed(2)}%`,
+    'r': reliability,
+    'ұяшық саны': total,
+    'су басқан үлесі': `${(100 * floodedCount / total).toFixed(2)}%`,
+    'prior дәлдігі': `${(100 * correctBefore / total).toFixed(2)}%`,
+    'Байес дәлдігі': `${(100 * correctAfter / total).toFixed(2)}%`,
+  });
+}
+
+console.log('\n4. Байес: қате хабар үлесі және болжам дәлдігі\n');
+console.log(
+  `Синтетикалық тәжірибе: ${trials} қайталау, ` +
+  `әр ұяшыққа ${reportsPerCell} тәуелсіз хабар, seed = 2026.`
+);
+console.log(
+  'Шын күй prior бойынша жасалады; модель r = 1 − қате үлесі деп біледі.'
+);
+console.log(
+  'Жіктеу шегі = 0.5; бұл жолды жабу шегі 0.7-ден бөлек.'
+);
+console.table(bayesRows);

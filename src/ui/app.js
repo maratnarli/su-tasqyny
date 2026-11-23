@@ -1,7 +1,6 @@
-
 /**
- * Интерфейс: картаны салу, батырмалар, «Қалай ойлады?» режимі.
- * Жауапты: Нұрдаулет Шұғыла (дизайн), бәрі бірге (модульдерді қосу).
+ * Интерфейс: карта, маршрут, Байес хабарламалары және CSP бөлу.
+ * Дизайн / CSP: Шұғыла. Маршрут: Марат. Байес: Динара.
  */
 (function () {
   'use strict';
@@ -15,16 +14,33 @@
     assignment: null,
     routeView: null,
     cspResult: null,
-    distances: null
+    distances: null,
+    steps: [],
+    selectedCell: null,
+    selectedHouse: null
   };
 
   const canvas = document.getElementById('map');
   const ctx = canvas.getContext('2d');
+  const reliabilityInput = document.getElementById('reliability');
+  const floodedButton = document.getElementById('report-flooded');
+  const dryButton = document.getElementById('report-dry');
+  const resetButton = document.getElementById('reset-reports');
 
   function showError(message) {
     const box = document.getElementById('error');
     box.textContent = message;
     box.hidden = false;
+  }
+
+  function clearError() {
+    const box = document.getElementById('error');
+    box.textContent = '';
+    box.hidden = true;
+  }
+
+  function percent(p) {
+    return `${(p * 100).toFixed(2)}%`;
   }
 
   async function loadMap() {
@@ -56,23 +72,43 @@
     for (let y = 0; y < state.map.height; y++) {
       for (let x = 0; x < state.map.width; x++) {
         const ch = state.map.grid[y][x];
+        const p = state.probs ? (state.probs.get(`${x},${y}`) ?? 0) : 0;
 
         ctx.fillStyle = CELL_COLORS[ch] || '#fff';
+
+        // Байес: жол мен көпір су басу қаупіне қарай көк түске боялады.
+        if (ch === '.' || ch === '=') {
+          ctx.fillStyle = `hsl(210, 75%, ${96 - 65 * p}%)`;
+        }
+
         ctx.fillRect(x * size, y * size, size, size);
 
         ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+        ctx.lineWidth = 1;
         ctx.strokeRect(x * size, y * size, size, size);
 
-        if (ch === 'S' || ch === 'H') {
-          ctx.fillStyle = '#1b2433';
+        if (ch === 'S' || ch === 'H' || ch === '=') {
+          ctx.fillStyle = ch === '=' && p > 0.5 ? '#fff' : '#1b2433';
           ctx.font = `bold ${Math.floor(size * 0.45)}px system-ui, sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(
-            ch === 'S' ? 'S' : '⌂',
+            ch === 'H' ? '⌂' : ch,
             x * size + size / 2,
             y * size + size / 2
           );
+        }
+
+        // Жабық ұяшықты қызыл жақтаумен белгілеу.
+        if (
+          state.probs &&
+          state.probs.has(`${x},${y}`) &&
+          p > Search.DEFAULTS.threshold
+        ) {
+          ctx.strokeStyle = '#dc2626';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x * size + 2, y * size + 2, size - 4, size - 4);
+          ctx.lineWidth = 1;
         }
       }
     }
@@ -107,6 +143,16 @@
 
     // Мараттың маршрут модулі.
     RouteUI.drawOverlay(ctx, state.routeView, size);
+
+    // Таңдалған ұяшық (Байес хабары үшін).
+    if (state.selectedCell) {
+      const { x, y } = state.selectedCell;
+      ctx.strokeStyle = '#7c3aed';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x * size + 2, y * size + 2, size - 4, size - 4);
+    }
+
+    ctx.lineWidth = 1;
   }
 
   function cellFromEvent(event) {
@@ -127,18 +173,70 @@
     return { x, y };
   }
 
-  // ─── Маршрут (Марат) ─────────────────────────────
+  // ─── Байес панелі ─────────────────────────────────────
+  function renderBayesPanel() {
+    const selected = document.getElementById('selected-cell');
+    const cell = state.selectedCell;
 
-  function onHouseClick(cell) {
-    state.routeView = RouteUI.compute(
-      state.map,
-      cell,
-      state.probs
-    );
+    if (cell) {
+      const p = state.probs.get(`${cell.x},${cell.y}`);
+      const closed = p > Search.DEFAULTS.threshold;
 
-    state.route = state.routeView.astar;
+      selected.textContent =
+        `Ұяшық (${cell.x}, ${cell.y}): P = ${percent(p)}. ` +
+        (closed ? 'Жол жабық.' : 'Өтуге болады.');
+    } else {
+      selected.textContent =
+        'Картадан жолды немесе көпірді таңдаңыз.';
+    }
 
-    draw();
+    floodedButton.disabled = !cell;
+    dryButton.disabled = !cell;
+    resetButton.disabled = state.reports.length === 0;
+
+    document.getElementById('report-count').textContent =
+      `Хабар саны: ${state.reports.length}`;
+
+    const explain = document.getElementById('bayes-explain');
+    explain.replaceChildren();
+
+    if (state.steps.length === 0) {
+      explain.textContent = 'Әзірге хабарлама жоқ.';
+      return;
+    }
+
+    const list = document.createElement('ol');
+
+    for (const step of state.steps) {
+      const item = document.createElement('li');
+      const label = step.says === 'flooded'
+        ? 'Су басты'
+        : 'Құрғақ';
+
+      item.textContent =
+        `(${step.x}, ${step.y}) — «${label}»: ` +
+        `${percent(step.before)} → ${percent(step.after)} ` +
+        `(r = ${state.reliability}).`;
+
+      list.appendChild(item);
+    }
+
+    explain.appendChild(list);
+  }
+
+  // ─── Маршрут панелі ───────────────────────────────────
+  function refreshRoute() {
+    state.routeView = state.selectedHouse
+      ? RouteUI.compute(
+          state.map,
+          state.selectedHouse,
+          state.probs
+        )
+      : null;
+
+    state.route = state.routeView
+      ? state.routeView.astar
+      : null;
 
     RouteUI.renderPanel(
       document.getElementById('route-panel'),
@@ -152,26 +250,129 @@
     );
 
     renderCspExplain();
+    draw();
   }
 
+  function readReliability() {
+    const value = reliabilityInput.value.trim();
+    const r = Number(value);
+
+    if (
+      value === '' ||
+      !Number.isFinite(r) ||
+      r < 0 ||
+      r > 1
+    ) {
+      throw new Error(
+        'Сенімділік 0 мен 1 аралығында болуы керек'
+      );
+    }
+
+    return r;
+  }
+
+  function applyReportState(reports, r) {
+    // Есептеу қате болса, бұрынғы күй сақталады.
+    const result = Bayes.applyReports(state.map, reports, r);
+
+    state.reports = reports;
+    state.reliability = r;
+    state.probs = result.probs;
+    state.steps = result.steps;
+
+    renderBayesPanel();
+
+    // CSP бұрын іске қосылған болса, жаңа ықтималдықпен қайта бөлеміз.
+    if (state.cspResult) {
+      runAssignment();
+    }
+
+    refreshRoute();
+  }
+
+  function submitReport(says) {
+    if (!state.map || !state.selectedCell) return;
+
+    try {
+      clearError();
+
+      const { x, y } = state.selectedCell;
+      const reports = [
+        ...state.reports,
+        { x, y, says },
+      ];
+
+      applyReportState(reports, readReliability());
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  // ─── Оқиғалар ─────────────────────────────────────────
   canvas.addEventListener('click', (event) => {
     if (!state.map) return;
 
     try {
+      clearError();
+
       const cell = cellFromEvent(event);
       if (!cell) return;
 
       const ch = MapUtil.cellAt(state.map, cell.x, cell.y);
 
-      if (ch === 'H') {
-        onHouseClick(cell);
+      if (!['.', '=', 'H', 'S'].includes(ch)) {
+        state.selectedCell = null;
+        renderBayesPanel();
+        draw();
+        return;
       }
 
-      // TODO (Динара): жол ұяшығын басқанда хабарламаны көрсету.
+      state.selectedCell = cell;
+
+      if (ch === 'H') {
+        state.selectedHouse = cell;
+        refreshRoute();
+      } else {
+        draw();
+      }
+
+      renderBayesPanel();
     } catch (err) {
       showError(err.message);
     }
   });
+
+  floodedButton.addEventListener('click', () => {
+    submitReport('flooded');
+  });
+
+  dryButton.addEventListener('click', () => {
+    submitReport('dry');
+  });
+
+  reliabilityInput.addEventListener('change', () => {
+    if (!state.map) return;
+
+    try {
+      clearError();
+      applyReportState(state.reports, readReliability());
+    } catch (err) {
+      reliabilityInput.value = String(state.reliability);
+      showError(err.message);
+    }
+  });
+
+  resetButton.addEventListener('click', () => {
+    if (!state.map) return;
+
+    try {
+      clearError();
+      applyReportState([], readReliability());
+    } catch (err) {
+      showError(err.message);
+    }
+  });
+
 
   // ─── CSP: қашықтықтарды есептеу ───────────────────
 
@@ -410,46 +611,50 @@
 
   function onAssignClick() {
     try {
-      if (!state.map) {
-        throw new Error('Карта әлі жүктелген жоқ');
-      }
-
-      const useMRV = document.getElementById('use-mrv').checked;
-      const useForwardChecking =
-        document.getElementById('use-forward').checked;
-
-      // Әр отбасы мен әр пункт арасындағы A* қашықтығын есептеу.
-      state.distances = calculateDistances();
-
-      // CSP алгоритмін іске қосу.
-      const result = CSP.solve(
-        state.map.families,
-        state.map.shelters,
-        state.distances,
-        {
-          useMRV,
-          useForwardChecking
-        }
-      );
-
-      state.cspResult = result;
-
-      state.assignment = result.ok
-        ? result.assignment
-        : null;
-
-      // Картаны жаңарту.
-      draw();
-
-      // Нәтижені шығару.
-      renderAssignment(result, state.distances);
-
-      // CSP қадамдарын түсіндіру.
-      renderCspExplain();
-
+      clearError();
+      runAssignment();
     } catch (err) {
       showError(err.message);
     }
+  }
+
+  function runAssignment() {
+    if (!state.map) {
+      throw new Error('Карта әлі жүктелген жоқ');
+    }
+
+    const useMRV = document.getElementById('use-mrv').checked;
+    const useForwardChecking =
+      document.getElementById('use-forward').checked;
+
+    // Әр отбасы мен әр пункт арасындағы A* қашықтығын есептеу.
+    state.distances = calculateDistances();
+
+    // CSP алгоритмін іске қосу.
+    const result = CSP.solve(
+      state.map.families,
+      state.map.shelters,
+      state.distances,
+      {
+        useMRV,
+        useForwardChecking
+      }
+    );
+
+    state.cspResult = result;
+
+    state.assignment = result.ok
+      ? result.assignment
+      : null;
+
+    // Картаны жаңарту.
+    draw();
+
+    // Нәтижені шығару.
+    renderAssignment(result, state.distances);
+
+    // CSP қадамдарын түсіндіру.
+    renderCspExplain();
   }
 
   document.getElementById('assign-button')
@@ -460,19 +665,7 @@
   loadMap()
     .then(map => {
       state.map = map;
-
-      draw();
-
-      RouteUI.renderPanel(
-        document.getElementById('route-panel'),
-        null
-      );
-
-      RouteUI.renderExplain(
-        document.getElementById('explain-panel'),
-        null,
-        draw
-      );
+      applyReportState([], state.reliability);
     })
     .catch(err => showError(err.message));
 
