@@ -2,6 +2,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const village = require('../data/village.json');
+const MapUtil = require('../src/map.js');
 
 test('карта өлшемі width × height-ке сай', () => {
   assert.equal(village.grid.length, village.height);
@@ -27,6 +28,17 @@ test('жалпы орын саны адам санынан көп', () => {
   assert.ok(places >= people, `${people} адам, ${places} орын`);
 });
 
-// TODO (Марат): src/map.js жазылғаннан кейін cellAt, isPassable, neighbors тесттері
-test.todo('cellAt картадан тыс координатқа түсінікті қате шығарады');
-test.todo('neighbors қабырға мен суды қайтармайды');
+test('cellAt картадан тыс координатқа түсінікті қате шығарады', () => {
+  assert.throws(() => MapUtil.cellAt(village, 56, 42), /картадан тыс/);
+});
+test('neighbors қабырға мен суды қайтармайды', () => {
+  for (let y = 0; y < village.height; y++) {
+    for (let x = 0; x < village.width; x++) {
+      for (const n of MapUtil.neighbors(village, x, y)) {
+        const ch = MapUtil.cellAt(village, n.x, n.y);
+        assert.notEqual(ch, '#');
+        assert.notEqual(ch, '~');
+      }
+    }
+  }
+});
