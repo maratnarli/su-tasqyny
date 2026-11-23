@@ -238,7 +238,7 @@
           <td>${family.size}</td>
           <td>${family.needsMedical ? 'Иә' : 'Жоқ'}</td>
           <td>${escapeHTML(shelter.name)}</td>
-          <td>${Number.isFinite(distance) ? distance.toFixed(1) : '—'}</td>
+          <td>${Number.isFinite(distance) ? (Number.isInteger(distance) ? distance : distance.toFixed(1)) : '—'}</td>
         </tr>
       `;
     }).join('');
@@ -274,9 +274,9 @@
             <tr>
               <th>Отбасы</th>
               <th>Адам</th>
-              <th>Медицина</th>
+              <th title="Медициналық көмек керек пе">Мед.</th>
               <th>Пункт</th>
-              <th>Жол ұзындығы</th>
+              <th title="Жол ұзындығы (қадам)">Жол</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>

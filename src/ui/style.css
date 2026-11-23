@@ -122,3 +122,8 @@ header p { margin: 0; color: #55627a; }
     font-size: 10px;
   }
 }
+
+/* Бөлу кестесі панельден шықпауы үшін (тар экран) */
+.table-wrapper { width: 100%; overflow-x: auto; }
+.table-wrapper .compare { width: 100%; font-size: 12px; }
+.table-wrapper .compare th, .table-wrapper .compare td { padding: 4px 3px; }
