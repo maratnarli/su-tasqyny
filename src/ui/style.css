@@ -196,7 +196,7 @@ header p { font-size: 15px; color: var(--muted); }
   font-size: 16px; background: #eef4ff; flex: none;
 }
 #assign-panel { margin-top: 0; }
-.panel:nth-of-type(1) h3::before { content: "👨‍👩‍👧"; }
+.panel:nth-of-type(1) h3::before { content: "🏠"; }
 section[aria-labelledby="bayes-heading"] h3::before { content: "📡"; background: #e6f6f3; }
 .panel summary::before { content: "🧠"; background: #f3ecff; }
 .panel:has(#route-panel) h3::before { content: "🧭"; background: #fff3e0; }

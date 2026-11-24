@@ -255,7 +255,7 @@
     let closed = 0;
     if (state.probs) for (const p of state.probs.values()) if (p > 0.7) closed++;
     const items = [
-      ['👨‍👩‍👧', m.families.length, 'отбасы'],
+      ['🏠', m.families.length, 'отбасы'],
       ['🧍', people, 'адам'],
       ['🏫', m.shelters.length, 'пункт'],
       ['🛏️', capacity, 'орын'],
