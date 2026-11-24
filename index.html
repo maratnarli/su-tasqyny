@@ -20,6 +20,7 @@
 
   <main class="layout">
     <section class="map-panel">
+      <div id="stats" class="stats"></div>
       <canvas
         id="map"
         width="720"
@@ -34,6 +35,16 @@
         Жол мен көпір: көк түс қоюлаған сайын су басу қаупі жоғары.
         P &gt; 70% болса, ұяшық жабық.
       </p>
+      <div class="legend">
+        <span><i style="background:#ffd166"></i>Үй (отбасы)</span>
+        <span><i style="background:#2a9d8f"></i>S — эвакуация пункті</span>
+        <span><i style="background:#4a90d9"></i>Өзен</span>
+        <span><i style="background:#b07d4f"></i>= Көпір</span>
+        <span><i style="background:#f7f9fc;border:1px solid #cbd5e1"></i>Жол</span>
+        <span><i style="background:#9aa5b1"></i>Ғимарат / кедергі</span>
+        <span><i style="background:hsl(210,75%,40%)"></i>Су басу қаупі жоғары</span>
+        <span><i class="line"></i>A* маршруты</span>
+      </div>
     </section>
 
     <aside class="controls">

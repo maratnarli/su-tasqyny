@@ -91,13 +91,26 @@
       ctx.lineJoin = 'round';
       ctx.lineCap = 'round';
       ctx.beginPath();
-      view.astar.path.forEach((c, i) => {
+      // Анимация: жол біртіндеп сызылады (view.pathStep).
+      const visible = view.pathStep == null
+        ? view.astar.path
+        : view.astar.path.slice(0, view.pathStep);
+      visible.forEach((c, i) => {
         const px = c.x * cellSize + half;
         const py = c.y * cellSize + half;
         if (i === 0) ctx.moveTo(px, py);
         else ctx.lineTo(px, py);
       });
       ctx.stroke();
+
+      // Жолдың басы (жылжып бара жатқан нүкте)
+      const head = visible[visible.length - 1];
+      if (head && view.pathStep != null && view.pathStep < view.astar.path.length) {
+        ctx.fillStyle = COLORS.path;
+        ctx.beginPath();
+        ctx.arc(head.x * cellSize + half, head.y * cellSize + half, cellSize * 0.28, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
     // 4. Бастапқы нүкте

@@ -257,3 +257,21 @@ section[aria-labelledby="bayes-heading"] > div { display: grid; grid-template-co
 header { display: grid; grid-template-columns: auto 1fr; column-gap: 16px; row-gap: 2px; }
 header::before { grid-row: 1 / span 2; }
 header h1, header p { grid-column: 2; }
+
+/* Статистика және легенда */
+.stats { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 14px; }
+.stat {
+  background: #f5f8fc; border: 1px solid var(--line); border-radius: 12px;
+  padding: 8px 4px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.stat-icon { font-size: 16px; }
+.stat b { font-size: 19px; font-weight: 800; color: var(--ink); line-height: 1.1; }
+.stat span:last-child { font-size: 11px; color: var(--muted); }
+.legend {
+  display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 14px; padding: 12px 14px;
+  background: #f5f8fc; border-radius: 12px; font-size: 13px; color: #36445a;
+}
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 16px; border-radius: 4px; display: inline-block; }
+.legend i.line { height: 4px; width: 22px; border-radius: 2px; background: #e63946; }
+@media (max-width: 700px) { .stats { grid-template-columns: repeat(4, 1fr); } }

@@ -225,6 +225,49 @@
   }
 
   // ─── Маршрут панелі ───────────────────────────────────
+  // ─── Маршрут анимациясы (тек көрініс) ─────────────
+  let pathTimer = null;
+  let lastAnimatedHouse = null;
+
+  function animatePath(view) {
+    if (pathTimer) { clearInterval(pathTimer); pathTimer = null; }
+    if (!view || !view.astar || !view.astar.found) return;
+    view.pathStep = 1;
+    pathTimer = setInterval(() => {
+      view.pathStep++;
+      if (view.pathStep >= view.astar.path.length) {
+        view.pathStep = null;
+        clearInterval(pathTimer);
+        pathTimer = null;
+      }
+      draw();
+    }, 70);
+  }
+
+  // ─── Статистика жолағы ─────────────────────────────
+  function renderStats() {
+    const el = document.getElementById('stats');
+    if (!el || !state.map) return;
+    const m = state.map;
+    const people = m.families.reduce((s, f) => s + f.size, 0);
+    const capacity = m.shelters.reduce((s, sh) => s + sh.capacity, 0);
+    const bridges = m.grid.reduce((s, row) => s + row.split('=').length - 1, 0);
+    let closed = 0;
+    if (state.probs) for (const p of state.probs.values()) if (p > 0.7) closed++;
+    const items = [
+      ['👨‍👩‍👧', m.families.length, 'отбасы'],
+      ['🧍', people, 'адам'],
+      ['🏫', m.shelters.length, 'пункт'],
+      ['🛏️', capacity, 'орын'],
+      ['🌉', bridges, 'көпір'],
+      ['📡', state.reports.length, 'хабар'],
+      ['⛔', closed, 'жабық ұяшық']
+    ];
+    el.innerHTML = items.map(([i, n, t]) =>
+      `<div class="stat"><span class="stat-icon">${i}</span><b>${n}</b><span>${t}</span></div>`
+    ).join('');
+  }
+
   function refreshRoute() {
     state.routeView = state.selectedHouse
       ? RouteUI.compute(
@@ -237,6 +280,15 @@
     state.route = state.routeView
       ? state.routeView.astar
       : null;
+
+    // Жаңа үй таңдалса — жолды анимациямен сызу.
+    const houseKey = state.selectedHouse
+      ? `${state.selectedHouse.x},${state.selectedHouse.y}` : null;
+    if (houseKey && houseKey !== lastAnimatedHouse) {
+      lastAnimatedHouse = houseKey;
+      animatePath(state.routeView);
+    }
+    renderStats();
 
     RouteUI.renderPanel(
       document.getElementById('route-panel'),
