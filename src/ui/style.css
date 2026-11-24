@@ -127,3 +127,130 @@ header p { margin: 0; color: #55627a; }
 .table-wrapper { width: 100%; overflow-x: auto; }
 .table-wrapper .compare { width: 100%; font-size: 12px; }
 .table-wrapper .compare th, .table-wrapper .compare td { padding: 4px 3px; }
+
+/* ═══════════ Жаңа дизайн (тек көрініс, логика өзгерген жоқ) ═══════════ */
+:root {
+  --bg: #eef3f9; --card: #ffffff; --ink: #142033; --muted: #5b6b82;
+  --line: #e2e8f1; --blue: #2563eb; --blue-d: #1d4ed8; --teal: #0f9d8a;
+  --shadow: 0 1px 2px rgba(16,24,40,.05), 0 8px 24px rgba(16,24,40,.07);
+}
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(1200px 500px at 10% -10%, #dbe8ff 0%, transparent 60%),
+              radial-gradient(900px 400px at 100% 0%, #d7f3ee 0%, transparent 55%), var(--bg);
+  color: var(--ink); min-height: 100vh;
+}
+.warning {
+  background: #fff7e0; border-bottom: 1px solid #f3dc95; color: #6b4e00;
+  text-align: center; font-size: 13px; padding: 8px 16px;
+}
+header {
+  max-width: 1280px; margin: 0 auto; padding: 28px 24px 18px;
+  display: flex; align-items: center; gap: 16px;
+}
+header::before {
+  content: "🌊"; font-size: 30px; width: 58px; height: 58px; flex: none;
+  display: grid; place-items: center; border-radius: 16px;
+  background: linear-gradient(135deg, #2563eb, #0f9d8a);
+  box-shadow: 0 8px 20px rgba(37,99,235,.3);
+}
+header h1 { font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+header p { font-size: 15px; color: var(--muted); }
+.layout {
+  max-width: 1280px; margin: 0 auto; padding: 0 24px 40px;
+  grid-template-columns: minmax(0, 1fr) 380px; gap: 22px; align-items: start;
+}
+.map-panel {
+  background: var(--card); border-radius: 18px; padding: 16px;
+  box-shadow: var(--shadow); border: 1px solid var(--line);
+  position: sticky; top: 16px;
+}
+.map-panel canvas { border: none; border-radius: 12px; display: block; }
+.map-panel p {
+  margin: 12px 4px 0; font-size: 14px; color: var(--muted); line-height: 1.5;
+  padding-left: 26px; position: relative;
+}
+.map-panel p:nth-of-type(1)::before { content: "👆"; position: absolute; left: 0; }
+.map-panel p:nth-of-type(2)::before { content: "💧"; position: absolute; left: 0; }
+.controls { background: transparent; border: none; padding: 0; }
+.controls h2 {
+  font-size: 13px; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin: 4px 4px 10px;
+}
+.panel {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px 18px; margin: 0 0 14px; box-shadow: var(--shadow);
+}
+.panel:empty, .panel:has(> #explain-panel:empty) { display: none; }
+.panel h3, .panel summary {
+  font-size: 16px; font-weight: 700; margin: 0 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.panel summary { cursor: pointer; margin: 0; list-style: none; }
+.panel summary::-webkit-details-marker { display: none; }
+.panel summary::after { content: "▾"; margin-left: auto; color: var(--muted); transition: transform .2s; }
+.panel details[open] summary { margin-bottom: 10px; }
+.panel details[open] summary::after { transform: rotate(180deg); }
+.panel h3::before, .panel summary::before {
+  width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center;
+  font-size: 16px; background: #eef4ff; flex: none;
+}
+#assign-panel { margin-top: 0; }
+.panel:nth-of-type(1) h3::before { content: "👨‍👩‍👧"; }
+section[aria-labelledby="bayes-heading"] h3::before { content: "📡"; background: #e6f6f3; }
+.panel summary::before { content: "🧠"; background: #f3ecff; }
+.panel:has(#route-panel) h3::before { content: "🧭"; background: #fff3e0; }
+.panel p { color: #36445a; }
+#reliability-help, .hint { color: var(--muted); font-size: 13px; }
+.option { margin: 6px 0; font-weight: 500; }
+.option input { width: 17px; height: 17px; accent-color: var(--blue); }
+
+button {
+  font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+  border-radius: 10px; padding: 9px 14px; border: 1px solid var(--line);
+  background: #f6f8fb; color: var(--ink); transition: all .15s ease;
+}
+button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,24,40,.08); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+#assign-button {
+  background: linear-gradient(135deg, var(--blue), #3b82f6); border-radius: 12px;
+  padding: 13px; box-shadow: 0 6px 16px rgba(37,99,235,.28);
+}
+#assign-button:hover { background: linear-gradient(135deg, var(--blue-d), var(--blue)); }
+#report-flooded { background: #e8f0ff; border-color: #bcd0ff; color: #1d4ed8; }
+#report-dry { background: #fff6e6; border-color: #f5d9a5; color: #8a5a00; }
+#reset-reports { width: 100%; margin-top: 4px; }
+section[aria-labelledby="bayes-heading"] > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+#reliability {
+  width: 80px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px;
+  font: inherit; margin-left: 6px; background: #f8fafc;
+}
+#reliability:focus { outline: 2px solid #bfd3ff; border-color: var(--blue); }
+#selected-cell { background: #f5f8fc; border-radius: 10px; padding: 8px 10px; }
+#report-count { font-weight: 600; }
+
+.assign-table, .compare, .table-wrapper .compare {
+  border-collapse: separate; border-spacing: 0; width: 100%;
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+}
+.assign-table th, .assign-table td, .compare th, .compare td {
+  border: none; border-bottom: 1px solid var(--line); padding: 8px 6px;
+}
+.assign-table tr:last-child td, .compare tr:last-child td { border-bottom: none; }
+.assign-table th, .compare th {
+  background: #f3f6fb; color: var(--muted); font-size: 11px;
+  text-transform: uppercase; letter-spacing: .04em;
+}
+.assign-table tbody tr:hover, .compare tr:hover td { background: #f8fbff; }
+.progress-track { height: 8px; background: #e8edf4; }
+.progress-fill { background: linear-gradient(90deg, var(--teal), #34d3b5); border-radius: 8px; }
+.csp-step { background: #f5f8fc; border-left: 3px solid var(--blue); border-radius: 8px; }
+.csp-step.backtrack { border-left-color: #dc2626; }
+.explain-buttons button { border-radius: 10px; }
+.error, .assign-warning { border-radius: 12px; }
+.route-none { color: #b42318; }
+
+@media (max-width: 1000px) {
+  .layout { grid-template-columns: 1fr; }
+  .map-panel { position: static; }
+}
