@@ -254,3 +254,6 @@ section[aria-labelledby="bayes-heading"] > div { display: grid; grid-template-co
   .layout { grid-template-columns: 1fr; }
   .map-panel { position: static; }
 }
+header { display: grid; grid-template-columns: auto 1fr; column-gap: 16px; row-gap: 2px; }
+header::before { grid-row: 1 / span 2; }
+header h1, header p { grid-column: 2; }
